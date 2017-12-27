@@ -1,6 +1,6 @@
 const scale_factor = 10
 
-function newHeatmap(root, {width, height, onclick, scaleY, scaleX, historical, onmousemove}) {
+function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove}) {
 
   let series = []
 
@@ -78,11 +78,9 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, historical, o
   }
 
   function render_() {
-      let start = historical
-        ? minimumTime(series)
-        : (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
+      let end = (latestTime(series)/scaleX + 1 | 0) * scaleX
+      let start = end - scaleX * width
 
-      let end = start + scaleX * width
       let next = []
 
       for (let i = 0; i < width; i++) {
@@ -97,7 +95,7 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, historical, o
 
         next.push(series[i])
 
-        if (t < end) {
+        if (t <= end) {
           let h = Math.min((series[i][1]/scaleY)|0, height-1)
           cols[((t-start)/scaleX)|0][h].push(series[i])
         }
@@ -202,6 +200,16 @@ function hslToRgb(h, s, l){
     }
 
     return pack(r*255, g*255, b*255, 255)
+}
+
+function latestTime(xs) {
+  let max = 0
+  for (let i = xs.length - 1; i >= 0; i--) {
+    if (xs[i][0] > max) {
+      max = xs[i][0]
+    }
+  }
+  return max
 }
 
 function minimumTime(xs) {

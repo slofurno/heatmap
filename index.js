@@ -119,18 +119,19 @@ function rankedsaturation(xxs) {
 }
 
 function ranksaturation(xs) {
-    let seen = {0: -1}
+    let seen = {0: 0}
     let ys = []
     xs.forEach(x => {
         let k = x.length
-        if (!seen[k]) {
+        if (k>0 && !seen[k]) {
             seen[k] = 1
             ys.push(k)
         }
     })
 
     ys.sort((a,b) => a-b)
-    ys.forEach((y,i) => seen[y] = i / (ys.length-1))
+    ys.forEach((y,i) => seen[y] = (i+1) / (ys.length))
+
     return seen
 }
 

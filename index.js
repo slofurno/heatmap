@@ -2,6 +2,8 @@ const scale_factor = 10
 
 function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove}) {
 
+  let scaleY_ = scaleY
+  let scaleX_ = scaleX
   let series = []
 
   let buffer = new ArrayBuffer(width * height * 4)
@@ -78,10 +80,10 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove})
   }
 
   function render_() {
-      let end = (latestTime(series)/scaleX + 1 | 0) * scaleX
-      let start = end - scaleX * width
+      let end = (latestTime(series)/scaleX_ + 1 | 0) * scaleX_
+      let start = end - scaleX_ * width
 
-      let next = []
+      //let next = []
 
       for (let i = 0; i < width; i++) {
           for (let j = 0; j < height; j++) {
@@ -93,11 +95,11 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove})
         let t = series[i][0]
         if (t < start) { continue }
 
-        next.push(series[i])
+        //next.push(series[i])
 
         if (t <= end) {
-          let h = Math.min((series[i][1]/scaleY)|0, height-1)
-          cols[((t-start)/scaleX)|0][h].push(series[i])
+          let h = Math.min((series[i][1]/scaleY_)|0, height-1)
+          cols[((t-start)/scaleX_)|0][h].push(series[i])
         }
       }
 
@@ -112,11 +114,22 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove})
           }
       }
 
-      series = next
+      //series = next
       ctx.putImageData(imageData, 0, 0)
   }
 
-  return {writeView, canvas, destroy, push_back }
+  function resize(opts) {
+    let {scaleX, scaleY} = opts || {}
+    scaleX_ = scaleX || scaleX_
+    scaleY_ = scaleY || scaleY_
+    render_()
+    return {
+      scaleX: scaleX_,
+      scaleY: scaleY_,
+    }
+  }
+
+  return {writeView, canvas, destroy, push_back, resize}
 }
 
 function rankedsaturation(xxs) {

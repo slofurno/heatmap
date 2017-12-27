@@ -11,7 +11,7 @@ const renderStyle =
   + "-ms-interpolation-mode:nearest-neighbor;"   /* IE8+           */
 
 
-export default function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove}) {
+function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove}) {
 
   let scaleY_ = scaleY
   let scaleX_ = scaleX
@@ -252,3 +252,4 @@ function pack(r,g,b,a) {
   return (a << 24) | (b << 16) | (g << 8) | r
 }
 
+module.exports = newHeatmap

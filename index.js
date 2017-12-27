@@ -1,102 +1,124 @@
-function pack(r,g,b,a) {
-    return (a << 24) | (b << 16) | (g << 8) | r
-}
-
 const scale_factor = 10
 
-function newHeatmap(root, {width, height, onclick, scaleY, scaleX, historical}) {
+function newHeatmap(root, {width, height, onclick, scaleY, scaleX, historical, onmousemove}) {
 
-    let series = []
+  let series = []
 
-    let buffer = new ArrayBuffer(width * height * 4)
-    let writeView = new Uint32Array(buffer)
-    let readView = new Uint8ClampedArray(buffer)
-    let imageData = new ImageData(readView, width, height)
+  let buffer = new ArrayBuffer(width * height * 4)
+  let writeView = new Uint32Array(buffer)
+  let readView = new Uint8ClampedArray(buffer)
+  let imageData = new ImageData(readView, width, height)
 
-    let canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    let ctx = canvas.getContext('2d')
-    ctx.strokeStyle = 'white'
+  let canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  let ctx = canvas.getContext('2d')
+  ctx.strokeStyle = 'white'
 
-    let cols = []
-    for (let j = 0; j < width; j++) {
-        let z = []
-        for (let i = 0; i < height; i++) { z.push([]) }
-        cols.push(z)
+  let cols = []
+  for (let j = 0; j < width; j++) {
+    let z = []
+    for (let i = 0; i < height; i++) { z.push([]) }
+    cols.push(z)
+  }
+
+  canvas.style.width = scale_factor * width + "px"
+  canvas.style.height = scale_factor * height + "px"
+
+  let last_move_ = [-1,-1]
+
+  function mapCoords(e) {
+    let rect = e.target.getBoundingClientRect();
+    let screenX = e.clientX - rect.left
+    let screenY = e.clientY - rect.top
+
+    let x = screenX/scale_factor|0
+    let y = screenY/scale_factor|0
+
+    return [x,height-1-y, screenX, screenY]
+  }
+
+  if (typeof onmousemove === 'function') {
+    canvas.onmousemove = function(e) {
+      let [x,y] = mapCoords(e)
+      let [x0,y0] = last_move_
+
+      if (x !== x0 || y !== y0) {
+        last_move_ = [x,y]
+        onmousemove(cols[x][y])
+      }
     }
+  }
 
-    canvas.style.width = scale_factor * width + "px"
-    canvas.style.height = scale_factor * height + "px"
+  canvas.onclick = function(e) {
+    let rect = e.target.getBoundingClientRect();
+    let screenX = e.clientX - rect.left
+    let screenY = e.clientY - rect.top
 
-    canvas.onclick = function(e) {
-        let rect = e.target.getBoundingClientRect();
-        let screenX = e.clientX - rect.left
-        let screenY = e.clientY - rect.top
-
-        let x = screenX/scale_factor|0
-        let y = screenY/scale_factor|0
+    let x = screenX/scale_factor|0
+    let y = screenY/scale_factor|0
 
 
-        if (typeof onclick === 'function') {
-            onclick(cols[x][height - 1 - y], screenX, screenY)
-        }
+    if (typeof onclick === 'function') {
+      onclick(cols[x][height - 1 - y], screenX, screenY)
     }
+  }
 
-    root.appendChild(canvas)
+  root.appendChild(canvas)
 
-    function destroy() {
-        canvas.onclick = null
-        root.innerHTML = ""
-    }
+  function destroy() {
+    canvas.onclick = null
+    canvas.onmousemove = null
+    root.innerHTML = ""
+  }
 
-    function push_back(xs) {
-        for (let i = 0; i < xs.length; i++) { series.push(xs[i]) }
-        render_()
-    }
+  function push_back(xs) {
+    for (let i = 0; i < xs.length; i++) { series.push(xs[i]) }
+    render_()
+  }
 
-    function render_() {
-        let start = historical
-          ? minimumTime(series)
-          : (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
+  function render_() {
+      let start = historical
+        ? minimumTime(series)
+        : (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
 
-        let end = start + scaleX * width
-        let next = []
+      let end = start + scaleX * width
+      let next = []
 
-        for (let i = 0; i < width; i++) {
-            for (let j = 0; j < height; j++) {
-                cols[i][j] = []
-            }
-        }
-
-        for (let i = 0; i < series.length; i++) {
-          let t = series[i][0]
-          if (t < start) { continue }
-
-          next.push(series[i])
-
-          if (t < end) {
-            let h = Math.min((series[i][1]/scaleY)|0, height-1)
-            cols[((t-start)/scaleX)|0][h].push(series[i])
+      for (let i = 0; i < width; i++) {
+          for (let j = 0; j < height; j++) {
+              cols[i][j] = []
           }
+      }
+
+      for (let i = 0; i < series.length; i++) {
+        let t = series[i][0]
+        if (t < start) { continue }
+
+        next.push(series[i])
+
+        if (t < end) {
+          let h = Math.min((series[i][1]/scaleY)|0, height-1)
+          cols[((t-start)/scaleX)|0][h].push(series[i])
         }
+      }
 
-        //let ranks = rankedsaturation(cols)
-        for (let i = 0; i < width; i++){
-            let col = cols[i]
-            let ranks = ranksaturation(col)
+      //let ranks = rankedsaturation(cols)
+      for (let i = 0; i < width; i++){
+          let col = cols[i]
+          let ranks = ranksaturation(col)
 
-            for(let j = 0; j < height; j++){
-                let k = (height - 1 - j) * width + i
-                writeView[k] = toColor(ranks[col[j].length])
-            }
-        }
+          for(let j = 0; j < height; j++){
+              let k = (height - 1 - j) * width + i
+              writeView[k] = toColor(ranks[col[j].length])
+          }
+      }
 
-        series = next
-        ctx.putImageData(imageData, 0, 0)
-    }
+      series = next
+      ctx.putImageData(imageData, 0, 0)
+  }
 
-    return {writeView, canvas, destroy, push_back }
+  return {writeView, canvas, destroy, push_back }
 }
 
 function rankedsaturation(xxs) {
@@ -191,3 +213,8 @@ function minimumTime(xs) {
   }
   return t0
 }
+
+function pack(r,g,b,a) {
+  return (a << 24) | (b << 16) | (g << 8) | r
+}
+

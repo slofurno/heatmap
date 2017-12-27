@@ -1,0 +1,14 @@
+{
+  "name": "streaming-example",
+  "devDependencies": {
+    "rollup": "^0.51.8",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "serve public"
+  }
+}

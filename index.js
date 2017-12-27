@@ -1,6 +1,17 @@
 const scale_factor = 10
 
-function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove}) {
+const renderStyle =
+  "image-rendering:optimizeSpeed;"             /* Legal fallback */
+  + "image-rendering:-moz-crisp-edges;"          /* Firefox        */
+  + "image-rendering:-o-crisp-edges;"            /* Opera          */
+  + "image-rendering:-webkit-optimize-contrast;" /* Safari         */
+  + "image-rendering:optimize-contrast;"         /* CSS3 Proposed  */
+  + "image-rendering:crisp-edges;"               /* CSS4 Proposed  */
+  + "image-rendering:pixelated;"                 /* CSS4 Proposed  */
+  + "-ms-interpolation-mode:nearest-neighbor;"   /* IE8+           */
+
+
+export default function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove}) {
 
   let scaleY_ = scaleY
   let scaleX_ = scaleX
@@ -24,8 +35,10 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove})
     cols.push(z)
   }
 
+  canvas.style.cssText += renderStyle
   canvas.style.width = scale_factor * width + "px"
   canvas.style.height = scale_factor * height + "px"
+
 
   let last_move_ = [-1,-1]
 

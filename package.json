@@ -1,9 +1,17 @@
 {
   "name": "@slofurno/heatmap",
-  "version": "0.4.4",
+  "version": "0.4.6",
+  "description" : "performant canvas heatmap for the browser",
   "url": "https://github.com/slofurno/heatmap",
   "main": "index.js",
+  "repository" : {
+    "type" : "git",
+    "url" : "http://github.com/slofurno/heatmap.git"
+  },
+  "author" : {
+    "name" : "Steve LoFurno"
+  },
   "dependencies": {},
-  "keywords": ["heatmap"],
+  "keywords": ["heatmap", "canvas", "browser"],
   "license": "MIT"
 }
